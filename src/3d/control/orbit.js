@@ -2,12 +2,18 @@
  * @file object manipulation through orbit control
  *
  * @author noodep
- * @version 2.27
+ * @version 2.28
  */
 
 import Quat from '../../math/quat.js';
 import Vec3 from '../../math/vec3.js';
+import Vec2 from '../../math/vec2.js';
 
+/**
+ * Class representing an Orbit Control. This class is responsible for managing and manipulating 3D objects' orientation and position in an orbit.
+ *
+ * @extends {EventTarget}
+ */
 export default class OrbitControl extends EventTarget {
 
 	static HALF_PI = Math.PI / 2.0;
@@ -17,6 +23,16 @@ export default class OrbitControl extends EventTarget {
 	static DEFAULT_AZIMUTH = 0.0;
 	static DEFAULT_INCLINATION = OrbitControl.HALF_PI;
 
+	/**
+	 * Create a new instance of OrbitControl.
+	 *
+	 * @param {Object} target - The target object.
+	 * @param {Object} options - An optional options object.
+	 * @property {Number} options.radius - The initial radius. Default is 1.0.
+	 * @property {Number} options.azimuth - The initial azimuth. Default is 0.0.
+	 * @property {Number} options.inclination - The initial inclination. Default is PI / 2.0.
+	 * @property {Vec3} options.offset - The initial offset. Default is new Vec3().
+	 */
 	constructor(target, options = {}) {
 		super();
 		this._target = target;
@@ -44,7 +60,7 @@ export default class OrbitControl extends EventTarget {
 	 * @param {Number} inclination              - inclination of the point to compute (from positive z).
 	 * @param {Vec3}   [postition = new Vec3()] - vector holding the result of the computation (also returned by this function).
 	 *
-	 * @retrun {Vec3} - computed postion.
+	 * @return {Vec3} - computed position.
 	 */
 	static position(offset, radius, azimuth, inclination, position = new Vec3()) {
 
@@ -65,22 +81,64 @@ export default class OrbitControl extends EventTarget {
 	 * @param {Quat}   [orientation = new Quat()]         - quaternion holding the result of the computation (also returned by this function)
 	 * @param {Quat}   [azimuth_orientation = new Quat()] - quaternion holding the azimuthal orientation (useful for avoiding the creation of a new quaternion every time this function is called)
 	 *
-	 * @retrun {Quat} - the computed orientation
+	 * @return {Quat} - the computed orientation
 	 */
 	static orientation(azimuth, inclination, orientation = new Quat(), inclination_orientation = new Quat()) {
-		// substracting PI/2 gives the orientation to which the camera should point
+		// subtracting PI/2 gives the orientation to which the camera should point
 		// it effectively mirrors along the inclination normal plane
 		// in a xyz right handed coordinate system, if the camera is in the positive octant, it should look towards the negative octant
 		// computes the inclination
 		inclination_orientation.fromAxisRotation(inclination - OrbitControl.HALF_PI, Vec3.Y_AXIS);
 
-		// comuputes the azimuthal rotation
+		// computes the azimuthal rotation
 		orientation.fromAxisRotation(azimuth, Vec3.Z_AXIS);
 
 		// rotates the azimuth by the inclination
 		orientation.multiply(inclination_orientation);
 
 		return orientation;
+	}
+
+	/**
+ * Converts cartesian coordinates to spherical coordinates.
+ *
+ * @param {Vec3} offset   - Origin of the orbital sphere.
+ * @param {Vec3} position - Position in cartesian coordinates.
+ * @param {Vec3} [result = new Vec3()] - Vector holding the result of the computation (also returned by this function).
+ *
+ * @return {Vec3} - Computed spherical coordinates (radius, azimuth, inclination).
+ */
+	static cartesianToSpherical(offset, position, result = new Vec3()) {
+		const dx = position.x - offset.x;
+		const dy = position.y - offset.y;
+		const dz = position.z - offset.z;
+
+		result.x = Math.sqrt(dx*dx + dy*dy + dz*dz); // radius
+		result.y = Math.atan2(dy, dx); // azimuth
+		result.z = Math.acos(dz / result.x); // inclination
+
+		return result;
+	}
+
+	/**
+		* Converts a quaternion to azimuth and inclination.
+		*
+		* @param {Quat} orientation           - Orientation quaternion.
+		* @param {Vec2} [result = new Vec2()] - Vector holding the result of the computation (also returned by this function).
+		*
+		* @return {Vec2} - Computed azimuth and inclination.
+		*/
+	static quaternionToAzimuthInclination(orientation, result = new Vec2()) {
+		// Assuming that the quaternion is a result of two rotations (around Z for azimuth and around Y for inclination):
+		// 1. Compute the forward vector from quaternion
+		let forward = new Vec3(0, 0, 1);
+		forward = orientation.rotate(forward);
+		// 2. Compute azimuth and inclination from forward vector
+		result.x = Math.atan2(forward._v[1], forward._v[0]); // azimuth
+		result.y = Math.acos(forward._v[2] / forward.magnitude()); // inclination
+		result.y += OrbitControl.HALF_PI; // add PI/2 since it was subtracted during the original calculation
+
+		return result;
 	}
 
 	get offset() {
@@ -154,7 +212,11 @@ export default class OrbitControl extends EventTarget {
 	}
 
 	/**
-	 * Moves the camera on the virtual sphere.
+	 * Moves the camera on the virtual sphere by changing azimuth and inclination according to provided deltas.
+	 * If the updated azimuth is more than 2*PI, it is normalized by the modulus operation. Inclination is capped between 0 and PI.
+	 *
+	 * @param {Number} horizontal_delta - Amount to change the azimuth.
+	 * @param {Number} vertical_delta - Amount to change the inclination.
 	 */
 	moveOnSphere(horizontal_delta, vertical_delta) {
 		this._azimuth = (this._azimuth + horizontal_delta) % OrbitControl.TWO_PI;
@@ -172,6 +234,42 @@ export default class OrbitControl extends EventTarget {
 		this.dispatchEvent(new CustomEvent('orientation'));
 	}
 
+	setOrbitControlToTargetPose() {
+		this.setFromTarget(this._target);
+	}
+
+	/**
+	 * Sets the state of the OrbitControl from the given target's state.
+	 * It first calculates the spherical coordinates from the target's position.
+	 * Then, it determines the azimuth and inclination from the target's orientation.
+	 * After normalizing these values, it updates the position of the OrbitControl to match the target.
+	 *
+	 * @param {Object3D} target - The target object from which to set the state.
+	 */
+	setFromTarget(target) {
+		// Calculate the spherical coordinates from the target's position
+		const sphericalCoordinates = OrbitControl.cartesianToSpherical(this._offset, target.position);
+
+		this._radius = sphericalCoordinates.x;
+		this._azimuth = sphericalCoordinates.y;
+		this._inclination = sphericalCoordinates.z;
+
+		// Calculate the azimuth and inclination from the target's orientation
+		const azimuthInclination = OrbitControl.quaternionToAzimuthInclination(target.orientation);
+
+		// We need to make sure that the azimuth and inclination are within the correct ranges
+		this._azimuth = (azimuthInclination.x + OrbitControl.TWO_PI) % OrbitControl.TWO_PI;
+		this._inclination = Math.max(Math.min(azimuthInclination.y, Math.PI), 0);
+
+		// Call update position to make sure everything is synced
+		this._updatePosition();
+	}
+
+	/**
+	 * Resets the OrbitControl to its initial state.
+	 * The offset is set to 0, inclination to PI/2 (so it's looking at the equator), azimuth to 0, and radius to 1.
+	 * After resetting these values, it updates the position.
+	 */
 	reset() {
 		this._offset.fill(0.0);
 		this._theta = OrbitControl.HALF_PI;
@@ -182,7 +280,9 @@ export default class OrbitControl extends EventTarget {
 	}
 
 	/**
-	 * Updates the target position and orientation in the cartesian coordinate system.
+	 * Private method that updates the target position and orientation based on the current state of the OrbitControl.
+	 * It first calculates the new position using the current state, then determines the orientation.
+	 * Finally, it sets the new pose for the target.
 	 */
 	_updatePosition() {
 		OrbitControl.position(this._offset, this._radius, this._azimuth, this._inclination, this._position);

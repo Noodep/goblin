@@ -12,3 +12,6 @@ export function randomFloat32() {
 	return Math.fround(Math.random());
 }
 
+export function approxEquals(a, b, epsilon = 0.00001) {
+	return Math.abs(a - b) < epsilon;
+}
