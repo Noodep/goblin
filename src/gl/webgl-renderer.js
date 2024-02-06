@@ -193,7 +193,7 @@ export default class WebGLRenderer {
 		}
 
 		if(this._active_program == name) {
-			wl('Program already active. Try minimizing program switching.');
+			// wl('Program already active. Try minimizing program switching.'); commented out due to the amount of reused programs.
 			return true;
 		}
 
