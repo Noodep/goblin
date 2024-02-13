@@ -117,13 +117,21 @@ export default class Camera {
 	}
 
 	/**
-	 * Sets this camera position and orientation and immediately updates the view.
+	 * Sets this camera position and orientation and immediately updates the view with verbose logging.
 	 */
 	setPose(position, orientation) {
+		console.log(`Setting camera pose. New position: (${position.toString()}), New orientation: (${orientation.toString()})`);
+
 		this._position.copy(position);
+		console.log(`Camera position updated to: (${this._position.toString()})`);
+
 		this._orientation.copy(orientation);
+		console.log(`Camera orientation updated to: (${this._orientation.toString()})`);
+
 		this.updateView();
+		console.log(`Camera view updated.`);
 	}
+
 
 	/**
 	 * Sets this camera clipping planes and immediately updates the projection.

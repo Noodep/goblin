@@ -303,8 +303,56 @@ export default class Quaternion {
 		return v;
 	}
 
+	/**
+	 * Calculates the dot product of this quaternion with another.
+	 * @param {Quaternion} other - The other quaternion to dot with this one.
+	 * @return {number} The dot product of the two quaternions.
+	 */
+	dot(other) {
+		return this._q[0] * other._q[0] + this._q[1] * other._q[1] + this._q[2] * other._q[2] + this._q[3] * other._q[3];
+	}
+
 	[Symbol.iterator]() {
 		return this._q[Symbol.iterator]();
+	}
+
+	/**
+	 * Negates the quaternion, effectively inverting its direction.
+	 * @return {module:math.Quaternion} - This quaternion, after negation.
+	 */
+	negate() {
+		this._q[0] = -this._q[0];
+		this._q[1] = -this._q[1];
+		this._q[2] = -this._q[2];
+		this._q[3] = -this._q[3];
+		return this;
+	}
+
+	/**
+	 * Adds another quaternion to this quaternion.
+	 * @param {Quaternion} other - The other quaternion to add.
+	 * @return {Quaternion} - This quaternion after addition.
+	 */
+	add(other) {
+		this._q[0] += other._q[0];
+		this._q[1] += other._q[1];
+		this._q[2] += other._q[2];
+		this._q[3] += other._q[3];
+		return this;
+	}
+
+	/**
+	 * Adds another quaternion to this one, scaled by a factor.
+	 * @param {Quaternion} other - The other quaternion to add.
+	 * @param {number} scale - The scale factor.
+	 * @return {Quaternion} - This quaternion after the scaled addition.
+	 */
+	addScaled(other, scale) {
+		this._q[0] += other._q[0] * scale;
+		this._q[1] += other._q[1] * scale;
+		this._q[2] += other._q[2] * scale;
+		this._q[3] += other._q[3] * scale;
+		return this;
 	}
 
 	/**
