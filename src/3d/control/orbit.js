@@ -2,7 +2,8 @@
  * @file object manipulation through orbit control
  *
  * @author noodep
- * @version 2.28
+ * @author jdiemert
+ * @version 2.34
  */
 
 import Quat from '../../math/quat.js';
@@ -134,8 +135,8 @@ export default class OrbitControl extends EventTarget {
 		let forward = new Vec3(0, 0, 1);
 		forward = orientation.rotate(forward);
 		// 2. Compute azimuth and inclination from forward vector
-		result.x = Math.atan2(forward._v[1], forward._v[0]); // azimuth
-		result.y = Math.acos(forward._v[2] / forward.magnitude()); // inclination
+		result.x = Math.atan2(forward.y, forward.x); // azimuth
+		result.y = Math.acos(forward.z / forward.magnitude()); // inclination
 		result.y += OrbitControl.HALF_PI; // add PI/2 since it was subtracted during the original calculation
 
 		return result;
@@ -239,6 +240,17 @@ export default class OrbitControl extends EventTarget {
 	}
 
 	/**
+	 * Ensures consistent representation of the quaternion for azimuth and inclination calculations.
+	 * Normalizes the quaternion and adjusts its representation if necessary.
+	 * @param {Quat} quaternion - The quaternion to adjust.
+	 * @return {Quat} - The adjusted quaternion.
+	 */
+	static adjustQuaternion(quaternion) {
+		let adjustedQuaternion = quaternion.clone().normalize();
+		return adjustedQuaternion;
+	}
+
+	/**
 	 * Sets the state of the OrbitControl from the given target's state.
 	 * It first calculates the spherical coordinates from the target's position.
 	 * Then, it determines the azimuth and inclination from the target's orientation.
@@ -247,22 +259,19 @@ export default class OrbitControl extends EventTarget {
 	 * @param {Object3D} target - The target object from which to set the state.
 	 */
 	setFromTarget(target) {
-		// Calculate the spherical coordinates from the target's position
+		// Adjust the target's orientation quaternion before calculations
+		let adjustedOrientation = OrbitControl.adjustQuaternion(target.orientation);
+		// Proceed with calculations using the adjusted orientation
 		const sphericalCoordinates = OrbitControl.cartesianToSpherical(this._offset, target.position);
 
 		this._radius = sphericalCoordinates.x;
 		this._azimuth = sphericalCoordinates.y;
 		this._inclination = sphericalCoordinates.z;
 
-		// Calculate the azimuth and inclination from the target's orientation
-		const azimuthInclination = OrbitControl.quaternionToAzimuthInclination(target.orientation);
+		const azimuthInclination = OrbitControl.quaternionToAzimuthInclination(adjustedOrientation);
 
-		// We need to make sure that the azimuth and inclination are within the correct ranges
-		this._azimuth = (azimuthInclination.x + OrbitControl.TWO_PI) % OrbitControl.TWO_PI;
-		this._inclination = Math.max(Math.min(azimuthInclination.y, Math.PI), 0);
 
-		// Call update position to make sure everything is synced
-		this._updatePosition();
+		this._updatePosition({set_pose: false});
 	}
 
 	/**
@@ -284,11 +293,15 @@ export default class OrbitControl extends EventTarget {
 	 * It first calculates the new position using the current state, then determines the orientation.
 	 * Finally, it sets the new pose for the target.
 	 */
-	_updatePosition() {
+	// need to pass in optional set_pose parameter to avoid infinite loop when calling this function from setFromTarget, and default for this method when this parameter is not being passed in is true
+	_updatePosition({set_pose = true} = {}) {
 		OrbitControl.position(this._offset, this._radius, this._azimuth, this._inclination, this._position);
 		OrbitControl.orientation(this._azimuth, this._inclination, this._orientation, this._inclination_orientation);
-
-		this._target.setPose(this._position, this._orientation);
+		// console to log the position and orientation of the orbit control and where the console log is coming from
+		console.log("OrbitControl.js: ", this._position.toString(), this._orientation.toString());
+		if (set_pose) {
+			this._target.setPose(this._position, this._orientation);
+		}
 	}
 
 }
