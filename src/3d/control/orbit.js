@@ -268,9 +268,10 @@ export default class OrbitControl extends EventTarget {
 		this._azimuth = sphericalCoordinates.y;
 		this._inclination = sphericalCoordinates.z;
 
+		// Calculate the azimuth and inclination from the target's orientation
 		const azimuthInclination = OrbitControl.quaternionToAzimuthInclination(adjustedOrientation);
 
-
+		// Set the OrbitControl's azimuth and inclination to the calculated values, no need to update the target's pose
 		this._updatePosition({set_pose: false});
 	}
 
@@ -293,12 +294,11 @@ export default class OrbitControl extends EventTarget {
 	 * It first calculates the new position using the current state, then determines the orientation.
 	 * Finally, it sets the new pose for the target.
 	 */
-	// need to pass in optional set_pose parameter to avoid infinite loop when calling this function from setFromTarget, and default for this method when this parameter is not being passed in is true
+	// need to pass in optional set_pose parameter to avoid infinite loop when calling this function from setFromTarget
 	_updatePosition({set_pose = true} = {}) {
 		OrbitControl.position(this._offset, this._radius, this._azimuth, this._inclination, this._position);
 		OrbitControl.orientation(this._azimuth, this._inclination, this._orientation, this._inclination_orientation);
-		// console to log the position and orientation of the orbit control and where the console log is coming from
-		console.log("OrbitControl.js: ", this._position.toString(), this._orientation.toString());
+
 		if (set_pose) {
 			this._target.setPose(this._position, this._orientation);
 		}
