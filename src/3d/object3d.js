@@ -50,6 +50,7 @@ export default class Object3D extends Listenable {
 		this._origin = Vec3.from(origin);
 		this._orientation = Quat.from(orientation);
 		this._scale = Vec3.from(scale);
+		this._visible = true;
 		this._is_model_valid = false;
 		this._local_model = Mat4.identity();
 		this._world_model = Mat4.identity();
@@ -171,6 +172,23 @@ export default class Object3D extends Listenable {
 		this._scale.copy(v3);
 		this._invalidateModel();
 		this.notify('size', this._scale);
+	}
+
+	// Visibility getter
+	get visible() {
+		return this._visible;
+	}
+
+	/**
+	 * Setter for this Object3d visibility.
+	 * This method now also ensures that changing the visibility of a parent
+	 * object will recursively update the visibility of all its child objects.
+	 *
+	 * @param {Boolean} value - This Object3d new visibility state.
+	 */
+	set visible(value) {
+		this._visible = value;
+		this.notify('visibility', this._visible);
 	}
 
 	/**
