@@ -167,13 +167,18 @@ export default class Scene extends Object3D {
 	}
 
 	/**
-	 * Render this Scene using program batches.
+	 * Render this Scene using program batches, respecting the visibility of renderables.
 	 */
 	render(renderer) {
 		this._program_cache.forEach((renderables, program_name) => {
 			this.applyProgramState(renderer, program_name);
 
-			for(let renderable of renderables) {
+			for (let renderable of renderables) {
+				// Check if the renderable is visible before rendering
+				if (!renderable.visible) {
+					continue; // Skip rendering this renderable if it's not visible
+				}
+
 				renderable.setShaderState(renderer);
 				renderable.render(renderer);
 				renderable.cleanShaderState(renderer);
