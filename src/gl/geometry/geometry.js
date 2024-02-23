@@ -57,6 +57,14 @@ export default class Geometry {
 		return this._vao;
 	}
 
+	/**
+ * Checks if the geometry has been initialized.
+ * @return {Boolean} True if initialized, false otherwise.
+ */
+	get isInitialized() {
+		return this._initialized;
+	}
+
 	addAttribute(name, attribute) {
 		if(this._attributes.has(name))
 			throw new Error(`Attribute ${name} already exists in this geometry.`);
