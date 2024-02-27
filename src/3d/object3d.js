@@ -181,8 +181,6 @@ export default class Object3D extends Listenable {
 
 	/**
 	 * Setter for this Object3d visibility.
-	 * This method now also ensures that changing the visibility of a parent
-	 * object will recursively update the visibility of all its child objects.
 	 *
 	 * @param {Boolean} value - This Object3d new visibility state.
 	 */
