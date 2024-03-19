@@ -67,8 +67,8 @@ export default class Renderable extends Object3D {
 	}
 
 	setShaderState(renderer) {
-		if (this._new_geometry && !this._geometry.isInitialized) {
-			this._geometry.destroy(renderer);
+		if (this._new_geometry) {
+			if (this._geometry.isInitialized) this._geometry.destroy(renderer);
 			this._geometry = this._new_geometry;
 			this._geometry.initialize(renderer);
 			this._new_geometry = null;
