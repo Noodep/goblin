@@ -15,10 +15,10 @@ export default class Plane {
 	static generatePlaneVertices(origin = new Vec3(), scale = Vec3.identity()) {
 		const i = 0.5;
 		return [
-			[origin.x - i * scale.x, origin.y, origin.z - i * scale.z],
-			[origin.x + i * scale.x, origin.y, origin.z - i * scale.z],
-			[origin.x + i * scale.x, origin.y, origin.z + i * scale.z],
-			[origin.x - i * scale.x, origin.y, origin.z + i * scale.z],
+			[origin.x - i * scale.x, origin.y - i * scale.y, origin.z],
+			[origin.x + i * scale.x, origin.y - i * scale.y, origin.z],
+			[origin.x + i * scale.x, origin.y + i * scale.y, origin.z],
+			[origin.x - i * scale.x, origin.y + i * scale.y, origin.z]
 		];
 	}
 

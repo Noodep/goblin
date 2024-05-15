@@ -269,6 +269,11 @@ export default class Vec3 {
 		return this;
 	}
 
+	abs() {
+		this._v[0] = Math.abs(this._v[0]);
+		this._v[1] = Math.abs(this._v[1]);
+		this._v[2] = Math.abs(this._v[2]);
+	}
 	/**
 	 * Subtracts the specified vector from this vector.
 	 *
@@ -467,6 +472,9 @@ export default class Vec3 {
 		return this._v[Symbol.iterator]();
 	}
 
+	isUniform() {
+		return this._v[0] == this._v[1] && this._v[1] == this._v[2];
+	}
 	/**
 	 * Returns a human readable string representing this vector.
 	 *
