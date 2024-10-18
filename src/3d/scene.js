@@ -170,20 +170,47 @@ export default class Scene extends Object3D {
 	 * Render this Scene using program batches, respecting the visibility of renderables.
 	 */
 	render(renderer) {
+		// render fully opaque objects first, deferring those that may blend colors
+		const those_may_blend = new Map();
 		this._program_cache.forEach((renderables, program_name) => {
 			this.applyProgramState(renderer, program_name);
 
+			let any_may_blend = false;
 			for (let renderable of renderables) {
 				// Check if the renderable is visible before rendering
 				if (!renderable.visible) {
 					continue; // Skip rendering this renderable if it's not visible
+				}
+				if (renderable.may_blend) {
+					any_may_blend = true;
+					continue;
 				}
 
 				renderable.setShaderState(renderer);
 				renderable.render(renderer);
 				renderable.cleanShaderState(renderer);
 			}
+			if (any_may_blend)
+				those_may_blend.set(program_name, renderables);
 		});
+		// if there are objects that may blend, render them
+		if (those_may_blend.size > 0) {
+			those_may_blend.forEach((renderables, program_name) => {
+				this.applyProgramState(renderer, program_name);
+
+				for (let renderable of renderables) {
+					// Check if the renderable is visible before rendering
+					if (!renderable.visible) {
+						continue; // Skip rendering this renderable if it's not visible
+					}
+					if (!renderable.may_blend) continue;
+
+					renderable.setShaderState(renderer);
+					renderable.render(renderer);
+					renderable.cleanShaderState(renderer);
+				}
+			});
+		}
 
 		renderer.useProgram(null);
 	}
