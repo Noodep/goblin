@@ -2,7 +2,7 @@
  * @file class representing a 3D renderer that uses a WebGLRenderingContext
  *
  * @author noodep
- * @version 0.19
+ * @version 0.64
  */
 
 import { dl, wl } from '../util/log.js';
@@ -30,11 +30,33 @@ export default class WebGLRenderer {
 		this._active_program = undefined;
 		this._programs = new Map();
 
-		this._context = undefined;
+		/** @type {WebGLRenderingContext | WebGL2RenderingContext} */
+		this._context = WebGLRenderer.createContext(this._canvas, context_type, webgl_options);
 		this._animation_frame = undefined;
 
-		this._initContext(context_type, webgl_options);
 		this.updateCanvasDimensions();
+	}
+
+	/** @typedef {'webgl' | 'webgl2'} WEBGL */
+
+	/**
+	 * Attempts to create a rendering context backed by the specified `canvas`
+	 *
+	 * @param {HTMLCanvasElement} canvas
+	 * @param {WEBGL} context_type - type of context to be instantiated
+	 * @param {WebGLContextAttributes} options - context options
+	 *
+	 * @return {WebGLRenderingContext | WebGL2RenderingContext}
+	 * @throws {Error} - if unable to create a webgl context.
+	 */
+	static createContext(canvas, context_type, options = WebGLRenderer.DEFAULT_WEBGL_OPTIONS) {
+		dl(`Creating WebGlRenderer context with options ${options}.`);
+		const context = canvas.getContext(context_type, options);
+
+		if(!context)
+			throw new Error('Unable to create webgl context.');
+
+		return context;
 	}
 
 	/**
@@ -230,7 +252,7 @@ export default class WebGLRenderer {
 	 * @param {GLsizeiptr} size - size of the buffer to allocate.
 	 * @param {GLenum} [buffer_type=ARRAY_BUFFER] - type of buffer to create.
 	 * @param {GLenum} [buffer_usage=STATIC_DRAW] - usage of the buffer.
-	 * @return {Boolean} - true if the buffer was successfully created, false otherwise.
+	 * @return {WebGLBuffer} - true if the buffer was successfully created, false otherwise.
 	 */
 	createBuffer(size, buffer_type = WebGLRenderingContext.ARRAY_BUFFER, buffer_usage = WebGLRenderingContext.STATIC_DRAW) {
 		const buffer_object = this._context.createBuffer();
@@ -336,19 +358,6 @@ export default class WebGLRenderer {
 		};
 
 		__loop(0);
-	}
-
-	/**
-	 * Initialize this renderer context with and instance of a WebGLRenderingContext.
-	 *
-	 * @throws {Error} - if unable to create a webgl context.
-	 */
-	_initContext(context_type = 'webgl', options = WebGLRenderer.DEFAULT_WEBGL_OPTIONS) {
-		dl(`Creating WebGlRenderer context with options ${options}.`);
-		this._context = this._canvas.getContext(context_type, options);
-
-		if(!this._context)
-			throw new Error('Unable to create webgl context.');
 	}
 
 }

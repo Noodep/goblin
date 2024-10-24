@@ -1,0 +1,13 @@
+{
+	"compilerOptions": {
+		"checkJs": true,
+		"lib": ["deno.ns", "dom"]
+	},
+	"imports": {
+	},
+	"fmt": {
+		"singleQuote": true,
+		"useTabs": true,
+		"lineWidth": 120
+	}
+}

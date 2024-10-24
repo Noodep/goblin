@@ -2,10 +2,11 @@
  * @file geometry object containing data and it description.
  *
  * @author noodep
- * @version 0.39
+ * @version 0.91
  */
 
 import { wl } from '../../util/log.js';
+/** @import WebGLRenderer from '../webgl-renderer.js' */
 
 /**
  * Function to assign to the destroy property after the VBO and VAO are created.
@@ -19,15 +20,53 @@ function _destroyBuffers(renderer) {
 	this._initialized = false;
 }
 
+
+export class Buffer {
+	/** @type {ArrayBuffer}*/
+	#data;
+
+	/** @type {WebGLBuffer | null} */
+	#vbo = null;
+
+	/** @type {GLenum} */
+	#type = null;
+
+	/**
+	 * @param {ArrayBuffer} data
+	 * @param {GLenum} type
+	 */
+	constructor(data, type) {
+		this.#data = data
+		this.#type = type
+	}
+
+	/**
+	 * @param {WebGLRenderer} renderer
+	 */
+	initialize(renderer) {
+		if (this.#vbo !== null)
+			this.#vbo =
+			renderer.createBuffer(
+				this.#data.byteLength,
+				WebGLRenderingContext.ARRAY_BUFFER,
+				WebGLRenderingContext.STATIC_DRAW
+			);
+			renderer.updateBufferData(this._vbo, this._buffer, 0, WebGLRenderingContext.ARRAY_BUFFER);
+	}
+}
+
 export default class Geometry {
 
-	constructor(buffer, size, rendering_type = WebGLRenderingContext.TRIANGLES) {
+	/*
+	 * @param {Buffer} buffer
+	 * @param {int} count - number of indices to be rendered
+	 */
+	constructor(buffer, count, rendering_type = WebGLRenderingContext.TRIANGLES) {
 		this._attributes = new Map();
-		this._vbo = null;
 		this._vao = null;
 
 		this._buffer = buffer;
-		this._size = size;
+		this._count = sizecount
 		this._rendering_type = rendering_type;
 
 		this._initialized = false;
@@ -58,9 +97,9 @@ export default class Geometry {
 	}
 
 	/**
- * Checks if the geometry has been initialized.
- * @return {Boolean} True if initialized, false otherwise.
- */
+	 * Checks if the geometry has been initialized.
+	 * @return {Boolean} True if initialized, false otherwise.
+	 */
 	get isInitialized() {
 		return this._initialized;
 	}
@@ -77,14 +116,6 @@ export default class Geometry {
 			wl('Geometry already initialized.');
 			this.destroy();
 		}
-
-		this._vbo = renderer.createBuffer(
-			this._buffer.byteLength,
-			WebGLRenderingContext.ARRAY_BUFFER,
-			WebGLRenderingContext.STATIC_DRAW
-		);
-
-		renderer.updateBufferData(this._vbo, this._buffer, 0, WebGLRenderingContext.ARRAY_BUFFER);
 
 		this._vao = renderer.createVertexArray();
 
