@@ -2,11 +2,12 @@
  * @file Icosahedron geometry generation.
  *
  * @author Noodep
- * @version 0.68
+ * @version 0.73
  */
 
 import Vec3 from '../../math/vec3.js';
 import BufferAttribute from '../../gl/buffer-attribute.js';
+import { Buffer } from '../../gl/geometry/geometry.js';
 import IndexedGeometry from '../../gl/geometry/indexed-geometry.js';
 
 export default class Icosahedron {
@@ -51,8 +52,11 @@ export default class Icosahedron {
 			offset++;
 		});
 
+		const index_buffer = new Buffer(indices, WebGLRenderingContext.ELEMENT_ARRAY_BUFFER)
+		const vertex_buffer = new Buffer(data, WebGLRenderingContext.ARRAY_BUFFER)
+		const geometry = new IndexedGeometry(index_buffer, vertex_buffer, WebGLRenderingContext.LINES, index_type);
+
 		const stride = element_stride * vertex_typed_array.BYTES_PER_ELEMENT;
-		const geometry = new IndexedGeometry(indices, data, WebGLRenderingContext.LINES, index_type);
 		geometry.addAttribute('position', new BufferAttribute(3, WebGLRenderingContext.FLOAT, 0, stride));
 
 		return geometry;
@@ -72,8 +76,12 @@ export default class Icosahedron {
 			offset++;
 		});
 
+
+		const index_buffer = new Buffer(indices, WebGLRenderingContext.ELEMENT_ARRAY_BUFFER)
+		const vertex_buffer = new Buffer(data, WebGLRenderingContext.ARRAY_BUFFER)
+		const geometry = new IndexedGeometry(index_buffer, vertex_buffer, WebGLRenderingContext.LINES, index_type);
+
 		const stride = element_stride * vertex_typed_array.BYTES_PER_ELEMENT;
-		const geometry = new IndexedGeometry(indices, data, WebGLRenderingContext.LINES, index_type);
 		geometry.addAttribute('position', new BufferAttribute(3, WebGLRenderingContext.FLOAT, 0, stride));
 		geometry.addAttribute('color', new BufferAttribute(3, WebGLRenderingContext.FLOAT, 3 * vertex_typed_array.BYTES_PER_ELEMENT, stride));
 

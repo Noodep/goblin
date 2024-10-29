@@ -3,7 +3,7 @@
  * this geometry is to be rendered with draw elements
  *
  * @author noodep
- * @version 0.39
+ * @version 0.44
  */
 
 import Geometry from './geometry.js';
@@ -24,10 +24,10 @@ function _destroyBuffers(renderer) {
 
 export default class IndexedGeometry extends Geometry {
 
-	constructor(indices, buffer, rendering_type = WebGLRenderingContext.TRIANGLES, index_type = WebGLRenderingContext.UNSIGNED_BYTE) {
-		super(buffer, indices.length, rendering_type);
-		this._ebo = null;
-		this._indices = indices;
+	constructor(index_buffer, vertex_buffer, rendering_type = WebGLRenderingContext.TRIANGLES, index_type = WebGLRenderingContext.UNSIGNED_BYTE) {
+		super(vertex_buffer, index_buffer.length, rendering_type);
+		// this._ebo = null;
+		this._index_buffer = index_buffer;
 		this._index_type = index_type;
 	}
 
@@ -42,16 +42,19 @@ export default class IndexedGeometry extends Geometry {
 	initialize(renderer) {
 		super.initialize(renderer);
 
-		this._ebo = renderer.createBuffer(
-			this._indices.byteLength,
-			WebGLRenderingContext.ELEMENT_ARRAY_BUFFER,
-			WebGLRenderingContext.STATIC_DRAW
-		);
+		this._index_buffer.initialize(renderer)
 
-		renderer.updateBufferData(this._ebo, this._indices, 0, WebGLRenderingContext.ELEMENT_ARRAY_BUFFER);
+
+		//this._ebo = renderer.createBuffer(
+		//	this._indices.byteLength,
+		//	WebGLRenderingContext.ELEMENT_ARRAY_BUFFER,
+		//	WebGLRenderingContext.STATIC_DRAW
+		//);
+		//
+		//renderer.updateBufferData(this._ebo, this._indices, 0, WebGLRenderingContext.ELEMENT_ARRAY_BUFFER);
 
 		renderer.activateVertexArray(this._vao);
-		renderer.activateBuffer(this._ebo, WebGLRenderingContext.ELEMENT_ARRAY_BUFFER);
+		renderer.activateBuffer(this._index_buffer);
 		renderer.activateVertexArray(null);
 
 		this.destroy = _destroyBuffers.bind(this, renderer);

@@ -2,11 +2,12 @@
  * @file class representing a 3D renderer that uses a WebGLRenderingContext
  *
  * @author noodep
- * @version 0.64
+ * @version 1.44
  */
 
 import { dl, wl } from '../util/log.js';
 import Program from './program.js';
+/** @import { Buffer } from './geometry/geometry.js'; */
 
 export default class WebGLRenderer {
 
@@ -18,35 +19,54 @@ export default class WebGLRenderer {
 	 * Creates a WebGLRenderer that uses a WebGLRenderingContext as rendering support.
 	 *
 	 * @param {HTMLCanvasElement} canvas - the canvas element to be used as context.
-	 * @param {String} context_type - type of the context backing this renderer (e.g. 'webgl', 'webgl2').
-	 * @param {Object} webgl_options - options that will be passed as argument when trying to instanciate the WebGLRenderingContext.
-	 * @return {module:gl.WebGLRenderer} - The newly created renderer.
+	 * @param {WebGLContextAttributes} webgl_options - options that will be passed as argument when trying to instanciate the WebGLRenderingContext.
 	 */
-	constructor({ canvas, context_type, webgl_options } = {}) {
+	constructor(canvas, webgl_options) {
 		dl('Creating WebGlRenderer.');
 		this._canvas = canvas;
 		this._scenes = new Map();
 
-		this._active_program = undefined;
+		/** @type {WebGLProgram | null} */
+		this._active_program = null;
 		this._programs = new Map();
 
-		/** @type {WebGLRenderingContext | WebGL2RenderingContext} */
-		this._context = WebGLRenderer.createContext(this._canvas, context_type, webgl_options);
+		/** @type {WebGL2RenderingContext} */
+		this._context = WebGLRenderer.createContext(this._canvas, 'webgl2', webgl_options);
 		this._animation_frame = undefined;
 
 		this.updateCanvasDimensions();
 	}
 
-	/** @typedef {'webgl' | 'webgl2'} WEBGL */
+
+	/**
+	 * @overload
+	 * @param {HTMLCanvasElement} canvas
+	 * @param {'webgl'} context_type
+	 * @param {WebGLContextAttributes} options - context options
+	 *
+	 * @return {WebGLRenderingContext}
+	 * @throws {Error} - if unable to create a webgl context.
+	 */
+
+	/**
+	 * @overload
+	 * @param {HTMLCanvasElement} canvas
+	 * @param {'webgl2'} context_type
+	 * @param {WebGLContextAttributes} options - context options
+	 *
+	 * @return {WebGL2RenderingContext}
+	 * @throws {Error} - if unable to create a webgl context.
+	 */
 
 	/**
 	 * Attempts to create a rendering context backed by the specified `canvas`
 	 *
 	 * @param {HTMLCanvasElement} canvas
-	 * @param {WEBGL} context_type - type of context to be instantiated
+	 * @param {'webgl' | 'webgl2'} context_type
 	 * @param {WebGLContextAttributes} options - context options
 	 *
-	 * @return {WebGLRenderingContext | WebGL2RenderingContext}
+	 * return {WebGLRenderingContext| WebGLRenderingContext}
+	 * @return {RenderingContext}
 	 * @throws {Error} - if unable to create a webgl context.
 	 */
 	static createContext(canvas, context_type, options = WebGLRenderer.DEFAULT_WEBGL_OPTIONS) {
@@ -252,7 +272,7 @@ export default class WebGLRenderer {
 	 * @param {GLsizeiptr} size - size of the buffer to allocate.
 	 * @param {GLenum} [buffer_type=ARRAY_BUFFER] - type of buffer to create.
 	 * @param {GLenum} [buffer_usage=STATIC_DRAW] - usage of the buffer.
-	 * @return {WebGLBuffer} - true if the buffer was successfully created, false otherwise.
+	 * @return {WebGLBuffer | null} - true if the buffer was successfully created, false otherwise.
 	 */
 	createBuffer(size, buffer_type = WebGLRenderingContext.ARRAY_BUFFER, buffer_usage = WebGLRenderingContext.STATIC_DRAW) {
 		const buffer_object = this._context.createBuffer();
@@ -272,32 +292,28 @@ export default class WebGLRenderer {
 	/**
 	 * Make the specified buffer object active.
 	 *
-	 * @param {WebGLBuffer} buffer - The buffer to activate.
-	 * @param {GLenum} [buffer_type=ARRAY_BUFFER] - type of buffer to bind.
-	 * possible values are WebGLRenderingContext.ARRAY_BUFFER and
-	 * WebGLRenderingContext.ELEMENT_ARRAY_BUFFER.
+	 * @param {Buffer} buffer - The buffer to activate.
 	 */
-	activateBuffer(buffer, buffer_type = WebGLRenderingContext.ARRAY_BUFFER) {
-		this._context.bindBuffer(buffer_type, buffer);
+	activateBuffer(buffer) {
+		this._context.bindBuffer(buffer.type, buffer.vbo);
 	}
 
 	/**
 	 * Updates data of the specified buffer object.
 	 *
-	 * @param {WebGLBuffer} buffer - The buffer to update.
-	 * @param {ArrayBuffer} buffer_data - new data to be copied.
+	 * @param {Buffer} buffer - The buffer to update.
+	 * @param {ArrayBufferView} buffer_data - new data to be copied.
 	 * @param {GLintptr} [offset=0] - offset indicating where to start the data replacement.
-	 * @param {GLenum} [buffer_type=ARRAY_BUFFER] - type of buffer to update.
 	 */
-	updateBufferData(buffer, buffer_data, offset = 0, buffer_type = WebGLRenderingContext.ARRAY_BUFFER) {
-		this.activateBuffer(buffer, buffer_type);
-		this._context.bufferSubData(buffer_type, offset, buffer_data);
+	updateBufferData(buffer, buffer_data, offset = 0) {
+		this.activateBuffer(buffer);
+		this._context.bufferSubData(buffer.type, offset, buffer_data);
 	}
 
 	/**
 	 * Creates a new vertex array object with the specified id.
 	 *
-	 * @return {WebGLVertexArrayObject} - the newly created vertex array object.
+	 * @return {WebGLVertexArrayObject | null} - the newly created vertex array object.
 	 */
 	createVertexArray() {
 		return this._context.createVertexArray();

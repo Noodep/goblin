@@ -2,7 +2,7 @@
  * @file geometry object containing data and it description.
  *
  * @author noodep
- * @version 0.91
+ * @version 1.26
  */
 
 import { wl } from '../../util/log.js';
@@ -22,17 +22,17 @@ function _destroyBuffers(renderer) {
 
 
 export class Buffer {
-	/** @type {ArrayBuffer}*/
+	/** @type {TypedArray}*/
 	#data;
 
 	/** @type {WebGLBuffer | null} */
 	#vbo = null;
 
 	/** @type {GLenum} */
-	#type = null;
+	#type;
 
 	/**
-	 * @param {ArrayBuffer} data
+	 * @param {ArrayBufferView} data
 	 * @param {GLenum} type
 	 */
 	constructor(data, type) {
@@ -44,29 +44,53 @@ export class Buffer {
 	 * @param {WebGLRenderer} renderer
 	 */
 	initialize(renderer) {
-		if (this.#vbo !== null)
-			this.#vbo =
-			renderer.createBuffer(
-				this.#data.byteLength,
-				WebGLRenderingContext.ARRAY_BUFFER,
-				WebGLRenderingContext.STATIC_DRAW
-			);
-			renderer.updateBufferData(this._vbo, this._buffer, 0, WebGLRenderingContext.ARRAY_BUFFER);
+		if (this.#vbo !== null) {
+			renderer.deleteBuffer(this.#vbo);
+		}
+
+		this.#vbo = renderer.createBuffer(
+			this.#data.byteLength,
+			this.#type,
+			WebGLRenderingContext.STATIC_DRAW
+		);
+
+		if (this.#vbo === null)
+			throw new Error('Unable to create WebGLBuffer');
+
+		renderer.updateBufferData(this, this.#data, 0);
 	}
+
+	get length() {
+		return this.#data.length;
+	}
+
+	get vbo() {
+		return this.#vbo;
+	}
+
+	get type() {
+		return this.#type;
+	}
+
+	get byteLength() {
+		return this.#data.byteLength;
+	}
+
 }
 
 export default class Geometry {
 
-	/*
+	/**
 	 * @param {Buffer} buffer
-	 * @param {int} count - number of indices to be rendered
+	 * @param {number} size - number of indices to be rendered
+	 * @param {GLenum} [rendering_type]
 	 */
-	constructor(buffer, count, rendering_type = WebGLRenderingContext.TRIANGLES) {
+	constructor(buffer, size, rendering_type = WebGLRenderingContext.TRIANGLES) {
 		this._attributes = new Map();
 		this._vao = null;
 
 		this._buffer = buffer;
-		this._count = sizecount
+		this._size = size
 		this._rendering_type = rendering_type;
 
 		this._initialized = false;
@@ -82,10 +106,6 @@ export default class Geometry {
 
 	get renderingType() {
 		return this._rendering_type;
-	}
-
-	get byteLength() {
-		return this._buffer.byteLength;
 	}
 
 	get size() {
@@ -118,9 +138,10 @@ export default class Geometry {
 		}
 
 		this._vao = renderer.createVertexArray();
-
 		renderer.activateVertexArray(this._vao);
-		renderer.activateBuffer(this._vbo);
+
+		this._buffer.initialize(renderer)
+		renderer.activateBuffer(this._buffer)
 
 		this._attributes.forEach((attribute, name) => {
 			renderer.enableAttribute(name, attribute);

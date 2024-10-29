@@ -2,14 +2,14 @@
  * @file test suite for webgl rendering
  *
  * @author noodep
- * @version 2.48
+ * @version 2.9
  */
 
 import { Logger, DEFAULT_LOGGER as DL } from '/src/util/log.js';
 import WebGLRenderer from '/src/gl/webgl-renderer.js';
 import SimpleProgram from '/src/gl/programs/simple.js';
 import SamplerProgram from '/src/gl/programs/sampler.js';
-import Geometry from '/src/gl/geometry/geometry.js';
+import Geometry, {Buffer} from '/src/gl/geometry/geometry.js';
 import IndexedGeometry from '/src/gl/geometry/indexed-geometry.js';
 import BufferAttribute from '/src/gl/buffer-attribute.js';
 import Vec3 from '/src/math/vec3.js';
@@ -44,7 +44,7 @@ export default class WebGLRendererTest {
 		WebGLRendererTest.sceneModification();
 		WebGLRendererTest.textDisplay();
 		WebGLRendererTest.testIcosahedron();
-		WebGLRendererTest.testOrthographicPerspective();
+		//WebGLRendererTest.testOrthographicPerspective();
 
 		console.timeEnd('Perf');
 		console.log('%c---------------------------------------', 'color:teal;');
@@ -64,7 +64,7 @@ export default class WebGLRendererTest {
 		canvas.height = body.clientHeight;
 		body.appendChild(canvas);
 
-		const renderer = new WebGLRenderer({ canvas: canvas });
+		const renderer = new WebGLRenderer(canvas);
 		renderer.start();
 
 		return renderer;
@@ -79,13 +79,7 @@ export default class WebGLRendererTest {
 		canvas.width = canvas.clientWidth;
 		canvas.height = canvas.clientHeight;
 
-		const renderer = new WebGLRenderer({
-			canvas: canvas,
-			context_type: 'webgl2',
-			webgl_options: {
-				antialias: true
-			}
-		});
+		const renderer = new WebGLRenderer(canvas, {antialias: true});
 		renderer.start();
 
 		return renderer;
@@ -316,7 +310,7 @@ export default class WebGLRendererTest {
 		const SCALE_VECTOR = new Vec3(SCALE, SCALE, SCALE);
 
 		const BYTE_OFFSET = 6 * 2 * 3 * 3;
-		const buffer = new Float32Array(NUM * BYTE_OFFSET);
+		const data = new Float32Array(NUM * BYTE_OFFSET);
 		const box_origin = new Vec3();
 		for (let i = 0; i < NUM; i++) {
 			const ix = (i % SIZE);
@@ -326,10 +320,12 @@ export default class WebGLRendererTest {
 			box_origin.x = -1.0 + (ix + 1) * OFFSET;
 			box_origin.y = -1.0 + (iy + 1) * OFFSET;
 			box_origin.z = -1.0 + (iz + 1) * OFFSET;
-			buffer.set(Box.generateBoxMesh(box_origin, SCALE_VECTOR), BYTE_OFFSET * i);
+			data.set(Box.generateBoxMesh(box_origin, SCALE_VECTOR), BYTE_OFFSET * i);
 		}
 
-		const geometry = new Geometry(buffer, buffer.length / 3, WebGLRenderingContext.TRIANGLES);
+		const buffer = new Buffer(data, WebGLRenderingContext.ARRAY_BUFFER)
+		const geometry = new Geometry(buffer, data.length / 3, WebGLRenderingContext.TRIANGLES);
+
 		geometry.addAttribute('position', new BufferAttribute(3));
 
 		const cube = Renderable.create({
@@ -372,8 +368,8 @@ export default class WebGLRendererTest {
 		const SCALE = 0.25 * OFFSET;
 		const SCALE_VECTOR = new Vec3(SCALE, SCALE, SCALE);
 
-		const vertices = new Float32Array(NUM * 8 * 3);
-		const indices = new Uint32Array(NUM * 36);
+		const vertex_data = new Float32Array(NUM * 8 * 3);
+		const index_data = new Uint32Array(NUM * 36);
 		const box_origin = new Vec3();
 		for (let i = 0; i < NUM; i++) {
 			const ix = (i % SIZE);
@@ -385,13 +381,16 @@ export default class WebGLRendererTest {
 			box_origin.z = -1.0 + (iz + 1) * OFFSET;
 			const local_mesh = Box.generateBoxVertices(box_origin, SCALE_VECTOR);
 			for (let vertex_idx = local_mesh.length - 1; vertex_idx >= 0; vertex_idx--) {
-				vertices.set(local_mesh[vertex_idx], 8 * 3 * i + vertex_idx * 3);
+				vertex_data.set(local_mesh[vertex_idx], 8 * 3 * i + vertex_idx * 3);
 			}
 			const local_indices = Box.generateBoxIndices(i * 8);
-			indices.set(local_indices, 36 * i);
+			index_data.set(local_indices, 36 * i);
 		}
 
-		const indexed_geometry = new IndexedGeometry(indices, vertices, WebGLRenderingContext.TRIANGLES, WebGLRenderingContext.UNSIGNED_INT);
+		const index_buffer = new Buffer(index_data, WebGLRenderingContext.ELEMENT_ARRAY_BUFFER)
+		const vertex_buffer = new Buffer(vertex_data, WebGLRenderingContext.ARRAY_BUFFER)
+
+		const indexed_geometry = new IndexedGeometry(index_buffer, vertex_buffer, WebGLRenderingContext.TRIANGLES, WebGLRenderingContext.UNSIGNED_INT);
 		indexed_geometry.addAttribute('position', new BufferAttribute(3));
 		const cubes = Renderable.create({
 			name: 'cubes',
@@ -556,12 +555,12 @@ export default class WebGLRendererTest {
 
 		new SimpleOrbitControlInput(orbit, camera, r._canvas);
 
-		const SCALE = 0.01;
+		const SCALE = 1/3;
 		const SCALE_VECTOR = new Vec3(SCALE, SCALE, SCALE);
 
 		const sun = Renderable.create({
 			name: 'sun',
-			geometry: Box.createIndexedColoredBoxGeometry(new Vec3(0.99, 0.72, 0.07), new Vec3(), SCALE_VECTOR),
+			geometry: Box.createIndexedColoredBoxGeometry(new Vec3(0.99, 0.72, 0.07), new Vec3()),
 			program: 'color',
 		});
 
@@ -586,7 +585,7 @@ export default class WebGLRendererTest {
 			parent.addChild(cube);
 
 			if (create > 0.4)
-				createRandomBox(cube, dist / 3, create / 2);
+				createRandomBox(cube, dist / 2, create / 2);
 
 			return cube;
 		};
@@ -599,7 +598,7 @@ export default class WebGLRendererTest {
 
 			// Repeatedly add and then remove boxes orbiting the sun
 			setInterval(() => {
-				var random_box = createRandomBox(sun, 1 + Math.random() * 3, Math.random());
+				const random_box = createRandomBox(sun, 6, Math.random());
 				setTimeout(() => {
 					sun.removeChild(random_box);
 					random_box.destroy();

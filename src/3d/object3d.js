@@ -2,7 +2,7 @@
  * @file Object3d class that represent a object that can be manipulated in a 3d environment
  *
  * @author noodep
- * @version 0.99
+ * @version 1.04
  */
 
 import { uuidv4 } from '../crypto/uuid.js';
@@ -35,12 +35,11 @@ export default class Object3D extends Listenable {
 	 * @memberOf module:3d
 	 * @alias Object3d
 	 *
-	 * @param {String} [id=uuidv4()] - this object's id.
-	 * @param {String} [name=''] - this object's name.
-	 * @param {Array} [origin] - a 3 dimensional array containing this object origin.
-	 * @param {Array} [orientation] - a 3 dimensional array containing this object orientation. Euler angles in radians around XYZ.
-	 * @param {Array} [scale] - a 3 dimensional array containing this object scaling.
-	 * @return {module:3d.Object3d} - The newly created Object3d.
+	 * @param {string} [id=uuidv4()] - this object's id.
+	 * @param {string} [name=''] - this object's name.
+	 * @param {Iterable<number>} [origin] - a 3 dimensional array containing this object origin.
+	 * @param {Iterable<number>} [orientation] - a 3 dimensional array containing this object orientation. Euler angles in radians around XYZ.
+	 * @param {Iterable<number>} [scale] - a 3 dimensional array containing this object scaling.
 	 */
 	constructor(id = uuidv4(), name = '', origin = Vec3.NULL, orientation = Quat.IDENTITY, scale = Vec3.IDENTITY) {
 		super();

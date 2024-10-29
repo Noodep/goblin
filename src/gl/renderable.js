@@ -3,11 +3,13 @@
  * Such object has a shader program associated with it and a geometry of some kind
  *
  * @author noodep
- * @version 0.19
+ * @version 0.29
  */
 
 import { dl } from '../util/log.js';
 import Object3D from '../3d/object3d.js';
+
+/** @import Geometry from './geometry/geometry.js' */
 
 /**
  * A class to represent an Object3D that can be rendered on a screen (by a
@@ -20,13 +22,17 @@ export default class Renderable extends Object3D {
 	 * @memberOf module:3d
 	 * @alias Renderable
 	 *
-	 * @param {Array} geometry - This object geometry.
+	 * @param {string} id - id of the renderable
+	 * @param {string} name - user specified name of the renderable
+	 * @param {Iterable<number>} origin
+	 * @param {Iterable<number>} orientation
+	 * @param {Iterable<number>} scale
+	 * @param {Geometry} geometry - This object geometry.
 	 * @param {String} program - The name of this object rendering program.
-	 * @param {Object} options - Object3D options - id, origin, orientation, scale.
-	 * @return {module:3d.Renderable} - The newly created Renderable.
 	 */
 	constructor(id, name, origin, orientation, scale, geometry, program) {
 		super(id, name, origin, orientation, scale);
+		/* @type Geometry */
 		this._geometry = geometry;
 		this._program = program;
 		this._model_uniform_location = undefined;

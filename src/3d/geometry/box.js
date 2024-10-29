@@ -2,12 +2,12 @@
  * @file Triangular box geometry generation.
  *
  * @author Noodep
- * @version 0.18
+ * @version 0.35
  */
 
 import Vec3 from '../../math/vec3.js';
 import BufferAttribute from '../../gl/buffer-attribute.js';
-import Geometry from '../../gl/geometry/geometry.js';
+import Geometry, { Buffer } from '../../gl/geometry/geometry.js';
 import IndexedGeometry from '../../gl/geometry/indexed-geometry.js';
 
 export default class Box {
@@ -54,7 +54,9 @@ export default class Box {
 	static createBoxGeometry(origin = new Vec3(), scale = Vec3.identity(), vertex_typed_array = Float32Array) {
 		const data = Box.generateBoxMesh(origin, scale, vertex_typed_array);
 
-		const geometry = new Geometry(data, data.length / 3, WebGLRenderingContext.TRIANGLES);
+		const buffer = new Buffer(data, WebGLRenderingContext.ARRAY_BUFFER);
+		const geometry = new Geometry(buffer, data.length / 3, WebGLRenderingContext.TRIANGLES);
+
 		geometry.addAttribute('position', new BufferAttribute(3));
 
 		return geometry;
@@ -72,7 +74,10 @@ export default class Box {
 			data.set(vertex, stride * offset++);
 		});
 
-		const geometry = new IndexedGeometry(indices, data, WebGLRenderingContext.TRIANGLES, index_type);
+		const index_buffer = new Buffer(indices, WebGLRenderingContext.ELEMENT_ARRAY_BUFFER)
+		const vertex_buffer = new Buffer(data, WebGLRenderingContext.ARRAY_BUFFER)
+		const geometry = new IndexedGeometry(index_buffer, vertex_buffer, WebGLRenderingContext.TRIANGLES, index_type);
+
 		geometry.addAttribute('position', new BufferAttribute(3));
 
 		return geometry;
@@ -91,8 +96,11 @@ export default class Box {
 			offset++;
 		});
 
+		const index_buffer = new Buffer(indices, WebGLRenderingContext.ELEMENT_ARRAY_BUFFER)
+		const vertex_buffer = new Buffer(data, WebGLRenderingContext.ARRAY_BUFFER)
+		const geometry = new IndexedGeometry(index_buffer, vertex_buffer, WebGLRenderingContext.TRIANGLES, index_type);
+
 		const stride = element_stride * vertex_typed_array.BYTES_PER_ELEMENT;
-		const geometry = new IndexedGeometry(indices, data, WebGLRenderingContext.LINES, index_type);
 		geometry.addAttribute('position', new BufferAttribute(3, WebGLRenderingContext.FLOAT, 0, stride));
 
 		return geometry;
@@ -112,8 +120,12 @@ export default class Box {
 			offset++;
 		});
 
+
+		const index_buffer = new Buffer(indices, WebGLRenderingContext.ELEMENT_ARRAY_BUFFER)
+		const vertex_buffer = new Buffer(data, WebGLRenderingContext.ARRAY_BUFFER)
+		const geometry = new IndexedGeometry(index_buffer, vertex_buffer, WebGLRenderingContext.TRIANGLES, index_type);
+
 		const stride = element_stride * vertex_typed_array.BYTES_PER_ELEMENT;
-		const geometry = new IndexedGeometry(indices, data, WebGLRenderingContext.TRIANGLES, index_type);
 		geometry.addAttribute('position', new BufferAttribute(3, WebGLRenderingContext.FLOAT, 0, stride));
 		geometry.addAttribute('color', new BufferAttribute(3, WebGLRenderingContext.FLOAT, 3 * vertex_typed_array.BYTES_PER_ELEMENT, stride));
 
@@ -134,8 +146,12 @@ export default class Box {
 			offset++;
 		});
 
+
+		const index_buffer = new Buffer(indices, WebGLRenderingContext.ELEMENT_ARRAY_BUFFER)
+		const vertex_buffer = new Buffer(data, WebGLRenderingContext.ARRAY_BUFFER)
+		const geometry = new IndexedGeometry(index_buffer, vertex_buffer, WebGLRenderingContext.LINES, index_type);
+
 		const stride = element_stride * vertex_typed_array.BYTES_PER_ELEMENT;
-		const geometry = new IndexedGeometry(indices, data, WebGLRenderingContext.LINES, index_type);
 		geometry.addAttribute('position', new BufferAttribute(3, WebGLRenderingContext.FLOAT, 0, stride));
 		geometry.addAttribute('color', new BufferAttribute(3, WebGLRenderingContext.FLOAT, 3 * vertex_typed_array.BYTES_PER_ELEMENT, stride));
 
@@ -158,7 +174,10 @@ export default class Box {
 			});
 		});
 
-		const geometry = new IndexedGeometry(indices, data, WebGLRenderingContext.TRIANGLES, index_type);
+		const index_buffer = new Buffer(indices, WebGLRenderingContext.ELEMENT_ARRAY_BUFFER)
+		const vertex_buffer = new Buffer(data, WebGLRenderingContext.ARRAY_BUFFER)
+		const geometry = new IndexedGeometry(index_buffer, vertex_buffer, WebGLRenderingContext.TRIANGLES, index_type);
+
 		const stride = 6 * vertex_typed_array.BYTES_PER_ELEMENT;
 		geometry.addAttribute('position', new BufferAttribute(3, WebGLRenderingContext.FLOAT, 0, stride));
 		geometry.addAttribute('normal', new BufferAttribute(3, WebGLRenderingContext.FLOAT, 3 * vertex_typed_array.BYTES_PER_ELEMENT, stride));
@@ -184,7 +203,10 @@ export default class Box {
 			});
 		});
 
-		const geometry = new IndexedGeometry(indices, data, WebGLRenderingContext.TRIANGLES, index_type);
+		const index_buffer = new Buffer(indices, WebGLRenderingContext.ELEMENT_ARRAY_BUFFER)
+		const vertex_buffer = new Buffer(data, WebGLRenderingContext.ARRAY_BUFFER)
+		const geometry = new IndexedGeometry(index_buffer, vertex_buffer, WebGLRenderingContext.TRIANGLES, index_type);
+
 		const stride = 9 * vertex_typed_array.BYTES_PER_ELEMENT;
 		geometry.addAttribute('position', new BufferAttribute(3, WebGLRenderingContext.FLOAT, 0, stride));
 		geometry.addAttribute('color', new BufferAttribute(3, WebGLRenderingContext.FLOAT, 3 * vertex_typed_array.BYTES_PER_ELEMENT, stride));

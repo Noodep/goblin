@@ -2,11 +2,12 @@
  * @file utility classes for 3d font manipulation.
  *
  * @author noodep
- * @version 0.16
+ * @version 0.23
  */
 
 import Vec3 from '../math/vec3.js';
 import IndexedGeometry from '../gl/geometry/indexed-geometry.js';
+import { Buffer } from '../gl/geometry/geometry.js';
 import BufferAttribute from '../gl/buffer-attribute.js';
 
 import Plane from '../3d/geometry/plane.js';
@@ -97,7 +98,9 @@ export default class TextUtils {
 		const glyphs = Array.from(text);
 		const glyph_count = glyphs.length;
 
+		/** @type {Uint8ArrayConstructor | Uint16ArrayConstructor} */
 		let index_typed_array = Uint8Array;
+		/** @type {GLenum} */
 		let index_type = WebGLRenderingContext.UNSIGNED_BYTE;
 		if(glyph_count * 4 > 255) {
 			index_typed_array = Uint16Array;
@@ -148,7 +151,10 @@ export default class TextUtils {
 			offset_x += ratio;
 		}
 
-		const geometry = new IndexedGeometry(indices, data, WebGLRenderingContext.TRIANGLES, index_type);
+		const index_buffer = new Buffer(indices, WebGLRenderingContext.ELEMENT_ARRAY_BUFFER)
+		const vertex_buffer = new Buffer(data, WebGLRenderingContext.ARRAY_BUFFER)
+		const geometry = new IndexedGeometry(index_buffer, vertex_buffer, WebGLRenderingContext.TRIANGLES, index_type);
+
 		const stride = element_stride * Float32Array.BYTES_PER_ELEMENT;
 		geometry.addAttribute('position', new BufferAttribute(3, WebGLRenderingContext.FLOAT, 0, stride));
 		geometry.addAttribute('uv', new BufferAttribute(2, WebGLRenderingContext.FLOAT, 3 * Float32Array.BYTES_PER_ELEMENT, stride));
@@ -156,6 +162,9 @@ export default class TextUtils {
 		return geometry;
 	}
 
+	/**
+	 * @param {number} value
+	 */
 	static _nearestPowerOfTwo(value) {
 		return Math.pow(2, Math.ceil(Math.log2(value)));
 	}
