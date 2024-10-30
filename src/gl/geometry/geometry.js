@@ -2,7 +2,7 @@
  * @file geometry object containing data and it description.
  *
  * @author noodep
- * @version 1.26
+ * @version 1.28
  */
 
 import { wl } from '../../util/log.js';
@@ -44,8 +44,10 @@ export class Buffer {
 	 * @param {WebGLRenderer} renderer
 	 */
 	initialize(renderer) {
+		// If this buffer has already been initialized, return.
 		if (this.#vbo !== null) {
-			renderer.deleteBuffer(this.#vbo);
+			console.log("Buffer already initialized, returning");
+			return;
 		}
 
 		this.#vbo = renderer.createBuffer(

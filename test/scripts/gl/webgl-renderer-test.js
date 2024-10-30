@@ -2,7 +2,7 @@
  * @file test suite for webgl rendering
  *
  * @author noodep
- * @version 2.9
+ * @version 3.03
  */
 
 import { Logger, DEFAULT_LOGGER as DL } from '/src/util/log.js';
@@ -618,7 +618,6 @@ export default class WebGLRendererTest {
 		scene.addCamera(camera);
 
 		const orbit = new OrbitControl(camera);
-		orbit.azimuth = -Math.PI / 2.0;
 		orbit.radius = 27.0;
 
 		new SimpleOrbitControlInput(orbit, camera, r._canvas);
@@ -641,7 +640,8 @@ export default class WebGLRendererTest {
 
 		const hello_world = Renderable.create({
 			name: 'hello-world',
-			origin: new Vec3(-text_width / 2.0, 0.0, 0.0),
+			origin: new Vec3(0.0, -text_width / 2.0, 0.0),
+			orientation: new Quat(0.5, 0.5, 0.5, 0.5),
 			geometry: text_geometry,
 			program: 'sampler',
 		});
