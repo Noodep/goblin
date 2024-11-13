@@ -416,14 +416,14 @@ export default class Object3D extends Listenable {
 			this.parent.removeChild(this);
 		}
 
-		this.clearListeners();
-
 		for (let child of this._children) {
 			this.removeChild(child);
 			child.destroy();
 		}
 
 		this.notify('destroy');
+
+		this.clearListeners();
 	}
 
 	/**
