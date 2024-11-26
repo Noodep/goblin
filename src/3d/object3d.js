@@ -24,6 +24,7 @@ import { wl } from '../util/log.js';
  *	'add' - When a child is added; passes this object and the added one
  *	'remove' - When a child is removed; passes this object and the removed one
  *	'destroy' - Directly after destroy() has been called
+ *	'visibility' - When the visibility property updates; passes the new visibility state
  * Note that "updates" above does not necessarily imply "changes"
  * Events will be fired when the property has the possibility of changing.
  */
@@ -50,9 +51,11 @@ export default class Object3D extends Listenable {
 		this._origin = Vec3.from(origin);
 		this._orientation = Quat.from(orientation);
 		this._scale = Vec3.from(scale);
+		this._visible = true;
 		this._is_model_valid = false;
 		this._local_model = Mat4.identity();
 		this._world_model = Mat4.identity();
+		this._listen_to_parent_visibility = true;
 
 		// Temporary quaternion used for rotations. This avoids creating one each time.
 		this._tmp_quaternion = new Quat();
@@ -173,6 +176,21 @@ export default class Object3D extends Listenable {
 		this.notify('size', this._scale);
 	}
 
+	// Visibility getter
+	get visible() {
+		return this._visible;
+	}
+
+	/**
+	 * Setter for this Object3d visibility.
+	 *
+	 * @param {Boolean} value - This Object3d new visibility state.
+	 */
+	set visible(value) {
+		this._visible = value;
+		this.notify('visibility', this._visible);
+	}
+
 	/**
 	 * Getter for this Object3d local model matrix.
 	 *
@@ -189,6 +207,10 @@ export default class Object3D extends Listenable {
 	 */
 	get worldModel() {
 		return this._world_model;
+	}
+
+	get listenToParentVisibility() {
+		return this._listen_to_parent_visibility;
 	}
 
 	/**
@@ -209,6 +231,14 @@ export default class Object3D extends Listenable {
 		object.parent = this;
 
 		this.notify('add', this, object);
+
+		if(object.listenToParentVisibility) {
+			// Listen to this parent's visibility changes and apply them to the child
+			this.addListener('visibility', (visible) => {
+			object.visible = visible;
+			});
+			object.visible = this.visible;
+		}
 	}
 
 	/**
@@ -240,6 +270,11 @@ export default class Object3D extends Listenable {
 		if(!object || !this.hasChild(object)) {
 			wl(`Object ${object} is not a child of this object.`);
 			return false;
+		}
+
+		if(object.listenToParentVisibility) {
+			// Remove the listener that applies this parent's visibility to the child
+			this.removeListener('visibility');
 		}
 
 		this._children.delete(object);
@@ -381,14 +416,14 @@ export default class Object3D extends Listenable {
 			this.parent.removeChild(this);
 		}
 
-		this.clearListeners();
-
 		for (let child of this._children) {
 			this.removeChild(child);
 			child.destroy();
 		}
 
 		this.notify('destroy');
+
+		this.clearListeners();
 	}
 
 	/**

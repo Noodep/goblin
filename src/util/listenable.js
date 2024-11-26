@@ -44,16 +44,22 @@ export default class Listenable {
 	}
 
 	/**
-	 * Removes a specified listener of a specified type.
+	 * Removes a specified listener of a specified type or all listeners of that type if no specific listener is provided.
 	 *
-	 * @param type - The type of listener to remove.
-	 * @param {Function} listener - The listener to remove.
+	 * @param {string} type - The type of listener to remove.
+	 * @param {Function} [listener] - The listener to remove. If not provided, all listeners for the type are removed.
 	 */
 	removeListener(type, listener) {
-		let type_listeners = this._listeners.get(type);
-		if (type_listeners) {
-			if (type_listeners.delete(listener) && type_listeners.size === 0) {
-				this._listeners.delete(type);
+		if (listener === undefined) {
+			// If no listener is provided, remove all listeners for the type
+			this._listeners.delete(type);
+		} else {
+			// If a specific listener is provided, remove only that listener
+			let type_listeners = this._listeners.get(type);
+			if (type_listeners) {
+				if (type_listeners.delete(listener) && type_listeners.size === 0) {
+					this._listeners.delete(type);
+				}
 			}
 		}
 	}

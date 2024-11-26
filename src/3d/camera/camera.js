@@ -2,7 +2,7 @@
  * @file A simple camera state object.
  *
  * @author noodep
- * @version 0.95
+ * @version 0.96
  */
 
 import Vec3 from '../../math/vec3.js';
@@ -61,12 +61,20 @@ export default class Camera {
 		this.updateView();
 	}
 
+	get position() {
+		return this._position.clone();
+	}
+
 	/**
 	 * Sets this camera orientation and immediately updates the view.
 	 */
 	set orientation(orientation) {
 		this._orientation.copy(orientation);
 		this.updateView();
+	}
+
+	get orientation() {
+		return this._orientation.clone();
 	}
 
 	/**
@@ -109,7 +117,7 @@ export default class Camera {
 	}
 
 	/**
-	 * Sets this camera position and drientation and immediately updates the view.
+	 * Sets this camera position and orientation and immediately updates the view.
 	 */
 	setPose(position, orientation) {
 		this._position.copy(position);

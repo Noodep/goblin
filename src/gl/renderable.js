@@ -60,12 +60,15 @@ export default class Renderable extends Object3D {
 
 		this._model_uniform_location = program.getUniform('model');
 
-		this._geometry.initialize(renderer);
+		// Only initialize geometry if it hasn't been initialized yet
+		if (!this._geometry.isInitialized) {
+			this._geometry.initialize(renderer);
+		}
 	}
 
 	setShaderState(renderer) {
 		if (this._new_geometry) {
-			this._geometry.destroy(renderer);
+			if (this._geometry.isInitialized) this._geometry.destroy(renderer);
 			this._geometry = this._new_geometry;
 			this._geometry.initialize(renderer);
 			this._new_geometry = null;

@@ -80,9 +80,9 @@ export default class SimpleOrbitControlInput {
 		const delta = this.#sensitivityAdjustedDisplacement(e, Math.sign(e.deltaY) * this.#wheel_sensitivity);
 
 		if(e.shiftKey)
-			this.#orbit_control.radius += delta;
-		else
 			this.#camera.verticalFieldOfView = this.#camera.verticalFieldOfView + delta;
+		else
+			this.#orbit_control.radius += delta;
 	}
 
 	/**
